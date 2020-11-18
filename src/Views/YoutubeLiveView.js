@@ -176,14 +176,15 @@ export default function YoutubeLiveView(props) {
   const acceptTurnRequest = () => {
     firebase
       .database()
-      .ref(`/${anotherCreatorId}/being`)
+      .ref(`/${requester}/being`)
       .on("value", (snap) => {
         if (snap.val()) {
           firebase
             .database()
-            .ref(`/${creatorId}`)
-            .update({ watching: snap.val() });
+            .ref(`/${loggedUser}`)
+            .update({ watching: snap.val(), streamReq: false });
         }
+        setStreamReq(false);
       });
   };
 
@@ -331,32 +332,34 @@ export default function YoutubeLiveView(props) {
           </Button>
         ) : null}
       </View>
-      <Snackbar
-        onClose={handleReqClose}
-        open={streamReq}
-        autoHideDuration={6000}
-      >
-        <Alert
-          severity="info"
-          style={{ backgroundColor: "#fff", color: "#000" }}
+      {host ? (
+        <Snackbar
+          onClose={handleReqClose}
+          open={streamReq && host}
+          autoHideDuration={6000}
         >
-          {requester} sent you a stream request.{" "}
-          <Button
-            style={{ color: "#1eb2a6", fontWeight: "bold" }}
-            size="small"
-            onClick={acceptTurnRequest}
+          <Alert
+            severity="info"
+            style={{ backgroundColor: "#fff", color: "#000" }}
           >
-            Accept
-          </Button>
-          <Button
-            style={{ color: "#fe346e", fontWeight: "bold" }}
-            size="small"
-            onClick={() => setStreamReq(false)}
-          >
-            Decline
-          </Button>
-        </Alert>
-      </Snackbar>
+            {requester} sent you a stream request.{" "}
+            <Button
+              style={{ color: "#1eb2a6", fontWeight: "bold" }}
+              size="small"
+              onClick={acceptTurnRequest}
+            >
+              Accept
+            </Button>
+            <Button
+              style={{ color: "#fe346e", fontWeight: "bold" }}
+              size="small"
+              onClick={() => setStreamReq(false)}
+            >
+              Decline
+            </Button>
+          </Alert>
+        </Snackbar>
+      ) : null}
     </>
   );
 }
