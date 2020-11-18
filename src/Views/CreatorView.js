@@ -36,15 +36,18 @@ export default function CreatorView() {
 
   useEffect(() => {
     if (timeNow) {
+      // firebase
+      //   .database()
+      //   .ref(`/${creatorId}/timeline`)
+      //   .update({ [timeNow]: creatorVideo });
       firebase
         .database()
-        .ref(`/${creatorId}/timeline`)
-        .update({ [timeNow]: creatorVideo });
-      firebase.database().ref(`/${creatorId}`).update({ being: creatorVideo });
-      firebase
-        .database()
-        .ref(`/Creations/${timeNow}`)
-        .update({ [creatorId]: creatorVideo });
+        .ref(`/${creatorId}`)
+        .update({ being: creatorVideo, watching: creatorVideo });
+      // firebase
+      //   .database()
+      //   .ref(`/Creations/${timeNow}`)
+      //   .update({ [creatorId]: creatorVideo });
       setLive(true);
     }
   }, [timeNow]);
