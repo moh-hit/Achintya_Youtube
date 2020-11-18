@@ -173,6 +173,20 @@ export default function YoutubeLiveView(props) {
       .update({ streamReq: true, requester: loggedUser });
   };
 
+  const acceptTurnRequest = () => {
+    firebase
+      .database()
+      .ref(`/${anotherCreatorId}/being`)
+      .on("value", (snap) => {
+        if (snap.val()) {
+          firebase
+            .database()
+            .ref(`/${creatorId}`)
+            .update({ watching: snap.val() });
+        }
+      });
+  };
+
   return (
     <>
       <Swipeable
@@ -327,7 +341,11 @@ export default function YoutubeLiveView(props) {
           style={{ backgroundColor: "#fff", color: "#000" }}
         >
           {requester} sent you a stream request.{" "}
-          <Button style={{ color: "#1eb2a6", fontWeight: "bold" }} size="small">
+          <Button
+            style={{ color: "#1eb2a6", fontWeight: "bold" }}
+            size="small"
+            onClick={acceptTurnRequest}
+          >
             Accept
           </Button>
           <Button
