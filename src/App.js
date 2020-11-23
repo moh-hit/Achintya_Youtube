@@ -1,6 +1,7 @@
 import React from "react";
 import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
-import Creation from "./Views/CreatorView";
+import CreatorView from "./Views/CreatorView";
+import CreationView from "./Views/CreationView";
 import Home from "./Views/Home";
 
 export default function App() {
@@ -8,7 +9,8 @@ export default function App() {
     <Router>
       <Switch>
         <Route exact path="/" component={Home} />
-        <Route path="/:creatorId" component={Creation} />
+        <Route exact path="/:creatorId" component={CreatorView} />
+        <Route exact path="/creation/:creationId" component={CreationView} />
       </Switch>
     </Router>
   );

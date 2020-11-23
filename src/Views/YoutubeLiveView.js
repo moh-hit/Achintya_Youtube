@@ -86,7 +86,7 @@ export default function YoutubeLiveView(props) {
       .database()
       .ref("/")
       .orderByChild("space")
-      .equalTo(creatorId)
+      .equalTo(loggedUser)
       .on("value", (snap) => {
         if (snap.val()) {
           let list = Object.values(snap.val());
@@ -179,10 +179,11 @@ export default function YoutubeLiveView(props) {
       .ref(`/${requester}/being`)
       .on("value", (snap) => {
         if (snap.val()) {
-          firebase
-            .database()
-            .ref(`/${loggedUser}`)
-            .update({ watching: snap.val(), streamReq: false });
+          firebase.database().ref(`/${loggedUser}`).update({
+            watching: snap.val(),
+            streamReq: false,
+            turnOpen: false,
+          });
         }
         setStreamReq(false);
       });
@@ -230,18 +231,6 @@ export default function YoutubeLiveView(props) {
               alignItems: "center",
             }}
           >
-            <YouTube
-              height={height}
-              width={width}
-              playing={true}
-              style={{
-                position: "absolute",
-                top: 0,
-                left: 0,
-                opacity: watchCreator ? 1 : 0,
-              }} // videoId={videoId}
-              url={"https://www.youtube.com/watch?v=" + videoId}
-            />
             {userTurnVideo && userTurnVideo !== videoId ? (
               <YouTube
                 height={height}
@@ -256,6 +245,19 @@ export default function YoutubeLiveView(props) {
                 url={"https://www.youtube.com/watch?v=" + userTurnVideo}
               />
             ) : null}
+            <YouTube
+              height={height}
+              width={width}
+              playing={true}
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                opacity: watchCreator ? 1 : 0,
+              }} // videoId={videoId}
+              url={"https://www.youtube.com/watch?v=" + videoId}
+            />
+
             <View
               style={{
                 position: "absolute",
@@ -268,6 +270,19 @@ export default function YoutubeLiveView(props) {
               }}
             ></View>
           </View>
+        ) : !joinAnother && loggedUser === creatorId && expression ? (
+          <YouTube
+            height={height}
+            width={width}
+            playing={true}
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              opacity: watchCreator ? 1 : 0,
+            }} // videoId={videoId}
+            url={"https://www.youtube.com/watch?v=" + userVideos[videoIndex]}
+          />
         ) : (
           <View
             style={{
