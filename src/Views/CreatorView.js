@@ -11,9 +11,11 @@ export default function CreatorView() {
   const { creatorId } = useParams();
 
   const [creator, setCreator] = useState({});
-  const [creatorVideo, setCreatorVideo] = useState("");
+  const [channelId, setChannelId] = useState("");
   const [timeNow, setTimeNow] = useState("");
   const [live, setLive] = useState(false);
+  const [channelExist, setChannelExist] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const fetchUser = async () => {
     await firebase
@@ -30,31 +32,47 @@ export default function CreatorView() {
     fetchUser();
   }, []);
 
-  const hostLiveCreation = () => {
+  const hostLiveCreation = async () => {
     setTimeNow(Date.now());
   };
+
+  useEffect(() => {
+    setLoading(true);
+    firebase
+      .database()
+      .ref(`/${creatorId}/channelId`)
+      .on("value", (snap) => {
+        if (snap.val()) {
+          setChannelExist(true);
+          setLive(true);
+          setLoading(false);
+          setChannelId(snap.val())
+        } else {
+          setLoading(false);
+        }
+      });
+  });
 
   useEffect(() => {
     if (timeNow) {
       // firebase
       //   .database()
       //   .ref(`/${creatorId}/timeline`)
-      //   .update({ [timeNow]: creatorVideo });
-      firebase
-        .database()
-        .ref(`/${creatorId}`)
-        .update({ being: creatorVideo, watching: creatorVideo });
+      //   .update({ [timeNow]: channelId });
+      firebase.database().ref(`/${creatorId}`).update({
+        channelId: channelId,
+      });
       // firebase
       //   .database()
       //   .ref(`/Creations/${timeNow}`)
-      //   .update({ [creatorId]: creatorVideo });
+      //   .update({ [creatorId]: channelId });
       setLive(true);
     }
   }, [timeNow]);
 
-  return live ? (
-    <YoutubeLiveView videoId={creatorVideo} creatorId={creatorId} />
-  ) : (
+  return live && channelExist ? (
+    <YoutubeLiveView channelId={channelId} creatorId={creatorId} />
+  ) : !channelExist && !loading ? (
     <View
       style={{
         height: height,
@@ -63,13 +81,13 @@ export default function CreatorView() {
         alignItems: "center",
       }}
     >
-      <h3>Enter your video id from youtube for starting live creation.</h3>
+      <h3>Enter your Youtube Channel Id</h3>
       <TextField
         variant="outlined"
-        placeholder="Enter VideoId"
+        placeholder="Enter Channel Id"
         size="small"
-        value={creatorVideo}
-        onChange={(e) => setCreatorVideo(e.target.value)}
+        value={channelId}
+        onChange={(e) => setChannelId(e.target.value)}
       />
       <Button
         variant="contained"
@@ -79,5 +97,7 @@ export default function CreatorView() {
         Host Live Creation
       </Button>
     </View>
-  );
+  ) : loading ? (
+    <h2>LOADING....</h2>
+  ) : null;
 }

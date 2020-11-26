@@ -20,6 +20,11 @@ import { withStyles } from "@material-ui/core/styles";
 import { yellow } from "@material-ui/core/colors";
 import Snackbar from "@material-ui/core/Snackbar";
 import MuiAlert from "@material-ui/lab/Alert";
+import Dialog from "@material-ui/core/Dialog";
+import DialogActions from "@material-ui/core/DialogActions";
+import DialogContent from "@material-ui/core/DialogContent";
+import DialogContentText from "@material-ui/core/DialogContentText";
+import DialogTitle from "@material-ui/core/DialogTitle";
 
 const { width, height } = Dimensions.get("window");
 const YellowSwitch = withStyles({
@@ -48,8 +53,8 @@ export default function YoutubeLiveView(props) {
   const [joinAnother, setJoinAnother] = useState(false);
   const [host, setHost] = useState(true);
   const [anotherCreatorId, setAnotherCreatorId] = useState("");
-  const [videoId, setVideoId] = useState(props.videoId);
-  const [selfVid, setSelfVid] = useState(props.videoId);
+  const [videoId, setVideoId] = useState("");
+  const [selfVid, setSelfVid] = useState("");
   const [userTurnVideo, setUserTurnVideo] = useState("");
   const [expression, setExpression] = useState(false);
   const [videoIndex, setVideoIndex] = useState(0);
@@ -59,6 +64,17 @@ export default function YoutubeLiveView(props) {
   const [creatorReleaseTurn, setCreatorReleaseTurn] = useState(false);
   const [streamReq, setStreamReq] = useState(false);
   const [requester, setRequester] = useState("");
+  const [openNoLiveDialog, setOpenNoLiveDialog] = React.useState(false);
+  const [count, setCount] = useState(0);
+
+  const handleClickOpen = () => {
+    setOpenNoLiveDialog(true);
+  };
+
+  const handleClose = () => {
+    setCount(count + 1);
+    setOpenNoLiveDialog(false);
+  };
 
   function onSwiping({ dir }) {
     if (dir == UP) {
@@ -102,10 +118,26 @@ export default function YoutubeLiveView(props) {
           setUserVideos(allVid);
         }
       });
-    firebase.database().ref(`/${loggedUser}`).onDisconnect().remove();
+    // firebase.database().ref(`/${loggedUser}`).onDisconnect().remove();
   }, []);
-
+  const fetchVidFromChannel = async () => {
+    const live =
+      "https://www.googleapis.com/youtube/v3/search?order=date&part=snippet&channelId=" +
+      props.channelId +
+      "&eventType=live&type=video&key=AIzaSyAlPafURqJYrSQ2RTsCkx6YGLY1XZ9tgdM";
+    const response = await fetch(live);
+    const data = await response.json();
+    console.log(data);
+    if (data.items.length === 0) {
+      handleClickOpen();
+    } else {
+      console.log(data.items.length);
+      setVideoId(data.items[0].id.videoId);
+      setSelfVid(data.items[0].id.videoId);
+    }
+  };
   useEffect(() => {
+    fetchVidFromChannel();
     if (!host) {
       firebase
         .database()
@@ -140,7 +172,7 @@ export default function YoutubeLiveView(props) {
       });
     await firebase
       .database()
-      .ref(`/${creatorId}`)
+      .ref(`/${loggedUser}`)
       .update({ space: anotherCreatorId });
     history.push(`/${anotherCreatorId}`);
     setHost(false);
@@ -323,7 +355,7 @@ export default function YoutubeLiveView(props) {
           backgroundColor: "rgba(255,255,255,0.1)",
         }}
       >
-        {host ? (
+        {host && videoId ? (
           <FormControlLabel
             style={{ color: "#fff" }}
             control={
@@ -375,6 +407,27 @@ export default function YoutubeLiveView(props) {
           </Alert>
         </Snackbar>
       ) : null}
+      <Dialog
+        open={openNoLiveDialog}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+      >
+        <DialogTitle id="alert-dialog-title">
+          {"Have you come live yet from your Youtube channel?"}
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="alert-dialog-description">
+            {count <= 0
+              ? "Before Hosting your stream on Achintya create your live presence from Youtube Channel."
+              : "Are you sure you are live on Youtube?"}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleClose} color="primary" autoFocus>
+            {count <= 0 ? "Will Do it Now." : "Check Again"}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </>
   );
 }
