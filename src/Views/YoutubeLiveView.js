@@ -124,7 +124,7 @@ export default function YoutubeLiveView(props) {
     const live =
       "https://www.googleapis.com/youtube/v3/search?order=date&part=snippet&channelId=" +
       props.channelId +
-      "&eventType=live&type=video&key=AIzaSyAlPafURqJYrSQ2RTsCkx6YGLY1XZ9tgdM";
+      "&eventType=live&type=video&key=AIzaSyBpebj4hCaJY2BwfgHdLgIX7hRHQeODHrM";
     const response = await fetch(live);
     const data = await response.json();
     console.log(data);
@@ -407,6 +407,7 @@ export default function YoutubeLiveView(props) {
           </Alert>
         </Snackbar>
       ) : null}
+      {}
       <Dialog
         open={openNoLiveDialog}
         aria-labelledby="alert-dialog-title"
