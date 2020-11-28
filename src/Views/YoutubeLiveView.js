@@ -124,7 +124,7 @@ export default function YoutubeLiveView(props) {
     const live =
       "https://www.googleapis.com/youtube/v3/search?order=date&part=snippet&channelId=" +
       props.channelId +
-      "&eventType=live&type=video&key=AIzaSyBpebj4hCaJY2BwfgHdLgIX7hRHQeODHrM";
+      "&eventType=live&type=video&key=AIzaSyCEIt-73VjCBgcGzc0bpsQXDBFSBkDhXFs";
     const response = await fetch(live);
     const data = await response.json();
     console.log(data);
@@ -134,10 +134,20 @@ export default function YoutubeLiveView(props) {
       console.log(data.items.length);
       setVideoId(data.items[0].id.videoId);
       setSelfVid(data.items[0].id.videoId);
+      await firebase
+        .database()
+        .ref(`/${loggedUser}`)
+        .update({
+          being: data.items[0].id.videoId,
+          watching: data.items[0].id.videoId,
+          [data.items[0].id.videoId]: Date.now(),
+        });
     }
   };
   useEffect(() => {
     fetchVidFromChannel();
+  }, []);
+  useEffect(() => {
     if (!host) {
       firebase
         .database()
@@ -169,15 +179,23 @@ export default function YoutubeLiveView(props) {
         console.log(snap.val());
         setVideoId(snap.val().being);
         setUserTurnVideo(snap.val().watching);
+        firebase
+          .database()
+          .ref(`Creations/` + snap.val().being)
+          .update({
+            [Date.now()]: selfVid,
+          });
       });
     await firebase
       .database()
       .ref(`/${loggedUser}`)
       .update({ space: anotherCreatorId });
-    history.push(`/${anotherCreatorId}`);
+
     setHost(false);
     setWatchingOther(true);
     setJoinAnother(!joinAnother);
+
+    history.push(`/${anotherCreatorId}`);
   };
 
   const handleCreatorTurnToggle = (event) => {
@@ -303,18 +321,30 @@ export default function YoutubeLiveView(props) {
             ></View>
           </View>
         ) : !joinAnother && loggedUser === creatorId && expression ? (
-          <YouTube
-            height={height}
-            width={width}
-            playing={true}
-            style={{
-              position: "absolute",
-              top: 0,
-              left: 0,
-              opacity: watchCreator ? 1 : 0,
-            }} // videoId={videoId}
-            url={"https://www.youtube.com/watch?v=" + userVideos[videoIndex]}
-          />
+          <>
+            <YouTube
+              height={height}
+              width={width}
+              playing={true}
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+              }} // videoId={videoId}
+              url={"https://www.youtube.com/watch?v=" + userVideos[videoIndex]}
+            />
+            <View
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                background: "black",
+                opacity: 0.1,
+                height: "100%",
+                width: "100%",
+              }}
+            ></View>
+          </>
         ) : (
           <View
             style={{

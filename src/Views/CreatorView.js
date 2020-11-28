@@ -46,7 +46,7 @@ export default function CreatorView() {
           setChannelExist(true);
           setLive(true);
           setLoading(false);
-          setChannelId(snap.val())
+          setChannelId(snap.val());
         } else {
           setLoading(false);
         }

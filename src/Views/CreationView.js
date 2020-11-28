@@ -294,9 +294,9 @@ function CreationView() {
         creationRef.current.getCurrentTime() + startTimeLag[creationIndex] <=
         0
       ) {
-        setVisibleNow(true);
-      } else {
         setVisibleNow(false);
+      } else {
+        setVisibleNow(true);
       }
       // expressionRef.current.seekTo(currentCreationTime, "seconds");
       //   }, 600);
@@ -335,8 +335,10 @@ function CreationView() {
       if (dir == RIGHT) {
         setExpression(false);
       } else if (dir == UP) {
+        console.log(creationIndex + 1, creations[creationIndex + 1]);
         setCreationIndex(creationIndex + 1);
       } else if (dir == DOWN) {
+        console.log(creationIndex - 1);
         setCreationIndex(creationIndex - 1);
       }
     } else {
