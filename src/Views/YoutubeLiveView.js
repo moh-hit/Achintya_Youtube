@@ -66,6 +66,7 @@ export default function YoutubeLiveView(props) {
   const [requester, setRequester] = useState("");
   const [openNoLiveDialog, setOpenNoLiveDialog] = React.useState(false);
   const [count, setCount] = useState(0);
+  const [ytPublishTime, setYtPublishTime] = useState("");
 
   const handleClickOpen = () => {
     setOpenNoLiveDialog(true);
@@ -124,13 +125,16 @@ export default function YoutubeLiveView(props) {
     const live =
       "https://www.googleapis.com/youtube/v3/search?order=date&part=snippet&channelId=" +
       props.channelId +
-      "&eventType=live&type=video&key=AIzaSyCEIt-73VjCBgcGzc0bpsQXDBFSBkDhXFs";
+      "&eventType=live&type=video&key=AIzaSyBnQ29RcMnleGHEA7bUXHJdSo1faY0E16g";
     const response = await fetch(live);
     const data = await response.json();
     console.log(data);
     if (data.items.length === 0) {
       handleClickOpen();
     } else {
+      var ytLiveStartTime = new Date(data.items[0].snippet.publishTime);
+      setYtPublishTime(ytLiveStartTime);
+
       console.log(data.items.length);
       setVideoId(data.items[0].id.videoId);
       setSelfVid(data.items[0].id.videoId);
@@ -140,7 +144,7 @@ export default function YoutubeLiveView(props) {
         .update({
           being: data.items[0].id.videoId,
           watching: data.items[0].id.videoId,
-          [data.items[0].id.videoId]: Date.now(),
+          [data.items[0].id.videoId]: ytLiveStartTime.getTime(),
         });
     }
   };
@@ -183,7 +187,7 @@ export default function YoutubeLiveView(props) {
           .database()
           .ref(`Creations/` + snap.val().being)
           .update({
-            [Date.now()]: selfVid,
+            [ytPublishTime]: selfVid,
           });
       });
     await firebase

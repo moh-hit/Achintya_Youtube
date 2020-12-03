@@ -294,7 +294,7 @@ function CreationView() {
         creationRef.current.getCurrentTime() + startTimeLag[creationIndex] <=
         0
       ) {
-        setVisibleNow(false);
+        setVisibleNow(true);
       } else {
         setVisibleNow(true);
       }
@@ -410,7 +410,7 @@ function CreationView() {
                   "https://www.youtube.com/watch?v=" +
                   creations[creationIndex] +
                   "&t=" +
-                  currentCreationTime -
+                  currentCreationTime +
                   startTimeLag[creationIndex]
                 }
                 // videoId={creations[creationIndex]}
