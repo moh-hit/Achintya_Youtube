@@ -13,20 +13,27 @@ import { TextField, Button, setRef } from "@material-ui/core";
 import firebase from "../config";
 import { useHistory } from "react-router-dom";
 import { useParams } from "react-router-dom";
-import FormControlLabel from "@material-ui/core/FormControlLabel";
-import Switch from "@material-ui/core/Switch";
-import GroupAddIcon from "@material-ui/icons/GroupAdd";
+import YoutubeComp from "../Components/YoutubeComp";
+import {
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Slide,
+  FormControlLabel,
+  Switch,
+  Snackbar,
+} from "@material-ui/core";
+import { GroupAdd, PersonAddDisabled, ExitToApp } from "@material-ui/icons";
+
+import MuiAlert from "@material-ui/lab/Alert";
 import { withStyles } from "@material-ui/core/styles";
 import { yellow } from "@material-ui/core/colors";
-import Snackbar from "@material-ui/core/Snackbar";
-import MuiAlert from "@material-ui/lab/Alert";
-import Dialog from "@material-ui/core/Dialog";
-import DialogActions from "@material-ui/core/DialogActions";
-import DialogContent from "@material-ui/core/DialogContent";
-import DialogContentText from "@material-ui/core/DialogContentText";
-import DialogTitle from "@material-ui/core/DialogTitle";
 
-const { width, height } = Dimensions.get("window");
+const Transition = React.forwardRef(function Transition(props, ref) {
+  return <Slide direction="down" ref={ref} {...props} />;
+});
+
 const YellowSwitch = withStyles({
   switchBase: {
     color: yellow[300],
@@ -45,166 +52,120 @@ function Alert(props) {
   return <MuiAlert elevation={6} variant="filled" {...props} />;
 }
 
+const { width, height } = Dimensions.get("window");
+
 export default function YoutubeLiveView(props) {
   const history = useHistory();
   const { creatorId } = useParams();
 
   const [loggedUser, setLoggedUser] = useState(props.creatorId);
-  const [joinAnother, setJoinAnother] = useState(false);
-  const [host, setHost] = useState(true);
+  const [channel, setChannel] = useState(props.channelId);
+  const [host, setHost] = useState(false);
+  const [guest, setGuest] = useState(false);
+
+  const [selfPresence, setSelfPresence] = useState("");
+  const [secondaryPresence, setSecondaryPresence] = useState("");
+  const [primaryPresence, setPrimaryPresence] = useState("");
+
+  const [otherUsers, setOtherUsers] = useState(false);
+  const [guestScreen, setGuestScreen] = useState(false);
+  const [watchingOtherCreator, setWatchingOtherCreator] = useState(false);
+
+  const [usersVideos, setUserVideos] = useState([]);
+  const [currentUserVideosIndex, setCurrentUserVideosIndex] = useState(0);
+  const [ytPublishTime, setYtPublishTime] = useState("");
+
+  const [openJoinModal, setOpenJoinModal] = React.useState(false);
   const [anotherCreatorId, setAnotherCreatorId] = useState("");
-  const [videoId, setVideoId] = useState("");
-  const [selfVid, setSelfVid] = useState("");
-  const [userTurnVideo, setUserTurnVideo] = useState("");
-  const [expression, setExpression] = useState(false);
-  const [videoIndex, setVideoIndex] = useState(0);
-  const [userVideos, setUserVideos] = useState([]);
-  const [watchingOther, setWatchingOther] = useState(false);
-  const [watchCreator, setWatchCreator] = useState(true);
   const [creatorReleaseTurn, setCreatorReleaseTurn] = useState(false);
   const [streamReq, setStreamReq] = useState(false);
   const [requester, setRequester] = useState("");
-  const [openNoLiveDialog, setOpenNoLiveDialog] = React.useState(false);
-  const [count, setCount] = useState(0);
-  const [ytPublishTime, setYtPublishTime] = useState("");
 
-  const handleClickOpen = () => {
-    setOpenNoLiveDialog(true);
+  const [showGroups, setShowGroups] = useState(false);
+  const [groupsHost, setGroupsHost] = useState([]);
+  const [groupIndex, setGroupIndex] = useState(0);
+  const [groupHostVid, setGroupsHostVid] = useState("");
+
+  const handleClickOpenJoinModal = () => {
+    setOpenJoinModal(true);
   };
 
-  const handleClose = () => {
-    setCount(count + 1);
-    setOpenNoLiveDialog(false);
+  const handleCloseJoinModal = () => {
+    setOpenJoinModal(false);
   };
 
-  function onSwiping({ dir }) {
-    if (dir == UP) {
-      setJoinAnother(false);
-    } else if (dir == DOWN) {
-      setJoinAnother(true);
-    } else if (dir == LEFT) {
-      if (!expression) setExpression(true);
-      else setVideoIndex(videoIndex + 1);
-    } else if (dir == RIGHT) {
-      if (videoIndex === 0) setExpression(false);
-      else setVideoIndex(videoIndex - 1);
-    }
-    if (watchingOther) {
-      if (dir == RIGHT) {
-        setWatchCreator(!watchCreator);
-      } else if (dir == LEFT) {
-        setWatchCreator(!watchCreator);
-      }
-    }
-  }
+  useEffect(() => {
+    fetchVidFromChannel();
+    return onUnmount();
+  }, []);
+
+  const onUnmount = async () => {
+    history.push(`/${loggedUser}`);
+    await setSelfPresence("");
+    await setWatchingOtherCreator(false);
+    await setPrimaryPresence("");
+    await setSecondaryPresence("");
+    await fetchVidFromChannel();
+  };
 
   useEffect(() => {
     firebase
       .database()
       .ref("/")
-      .orderByChild("space")
-      .equalTo(loggedUser)
-      .on("value", (snap) => {
-        if (snap.val()) {
-          let list = Object.values(snap.val());
-          let allVid = list.map((user) => {
-            return user.being;
-          });
-          console.log(
-            list.map((user) => {
-              return user.being;
-            })
-          );
-          console.log(allVid);
-          setUserVideos(allVid);
-        }
-      });
-    // firebase.database().ref(`/${loggedUser}`).onDisconnect().remove();
-  }, []);
-  const fetchVidFromChannel = async () => {
-    const live =
-      "https://www.googleapis.com/youtube/v3/search?order=date&part=snippet&channelId=" +
-      props.channelId +
-      "&eventType=live&type=video&key=AIzaSyBnQ29RcMnleGHEA7bUXHJdSo1faY0E16g";
-    const response = await fetch(live);
-    const data = await response.json();
-    console.log(data);
-    if (data.items.length === 0) {
-      handleClickOpen();
-    } else {
-      var ytLiveStartTime = new Date(data.items[0].snippet.publishTime);
-      setYtPublishTime(ytLiveStartTime);
-
-      console.log(data.items.length);
-      setVideoId(data.items[0].id.videoId);
-      setSelfVid(data.items[0].id.videoId);
-      await firebase
-        .database()
-        .ref(`/${loggedUser}`)
-        .update({
-          being: data.items[0].id.videoId,
-          watching: data.items[0].id.videoId,
-          [data.items[0].id.videoId]: ytLiveStartTime.getTime(),
-        });
-    }
-  };
-  useEffect(() => {
-    fetchVidFromChannel();
-  }, []);
-  useEffect(() => {
-    if (!host) {
-      firebase
-        .database()
-        .ref(`/${anotherCreatorId}/turnOpen`)
-        .on("value", (snapshot) => {
-          setCreatorReleaseTurn(snapshot.val());
-        });
-    } else {
-      firebase
-        .database()
-        .ref(`/${creatorId}/streamReq`)
-        .on("value", (snapshot) => {
-          setStreamReq(snapshot.val());
-        });
-      firebase
-        .database()
-        .ref(`/${creatorId}`)
-        .on("value", (snapshot) => {
-          setRequester(snapshot.val().requester);
-        });
-    }
-  });
-
-  const joinStream = async () => {
-    await firebase
-      .database()
-      .ref(`/${anotherCreatorId}`)
-      .on("value", (snap) => {
-        console.log(snap.val());
-        setVideoId(snap.val().being);
-        setUserTurnVideo(snap.val().watching);
+      .on("child_changed", () => {
         firebase
           .database()
-          .ref(`Creations/` + snap.val().being)
-          .update({
-            [ytPublishTime]: selfVid,
+          .ref("/")
+          .orderByChild("space")
+          .equalTo(loggedUser)
+          .on("value", (snap) => {
+            if (snap.val()) {
+              let list = Object.values(snap.val());
+              let allVid = list.map((user) => {
+                return user.being;
+              });
+              console.log(allVid);
+              setUserVideos(allVid);
+            }
           });
+        if (host) {
+          console.log(loggedUser);
+          firebase
+            .database()
+            .ref(`/${loggedUser}/guestPresent`)
+            .on("value", (snapshot) => {
+              setGuest(snapshot.val());
+            });
+        } else {
+          console.log(creatorId);
+          firebase
+            .database()
+            .ref(`/${anotherCreatorId}/guestPresent`)
+            .on("value", (snapshot) => {
+              setGuest(snapshot.val());
+            });
+        }
+        // firebase
+        //   .database()
+        //   .ref("/")
+        //   .orderByChild("space")
+        //   .equalTo("selfGroup")
+        //   .on("value", function (snapshot) {
+        //     setGroupsHost(Object.keys(snapshot.val()));
+        //   });
       });
-    await firebase
+
+    // firebase.database().ref(`/${loggedUser}`).onDisconnect().remove();
+  });
+
+  useEffect(() => {
+    firebase
       .database()
-      .ref(`/${loggedUser}`)
-      .update({ space: anotherCreatorId });
-
-    setHost(false);
-    setWatchingOther(true);
-    setJoinAnother(!joinAnother);
-
-    history.push(`/${anotherCreatorId}`);
-  };
-
-  const handleCreatorTurnToggle = (event) => {
-    setCreatorReleaseTurn(event.target.checked);
-  };
+      .ref(`/${groupsHost[groupIndex]}/being`)
+      .on("value", (snap) => {
+        setGroupsHostVid(snap.val());
+      });
+  }, [groupIndex, showGroups]);
 
   useEffect(() => {
     firebase
@@ -212,6 +173,20 @@ export default function YoutubeLiveView(props) {
       .ref(`/${creatorId}`)
       .update({ turnOpen: creatorReleaseTurn });
   }, [creatorReleaseTurn]);
+
+  // useEffect(() => {
+  //   if (guestScreen) {
+  //     firebase
+  //       .database()
+  //       .ref(`/${loggedUser}`)
+  //       .update({ watching: secondaryPresence });
+  //   } else {
+  //     firebase
+  //       .database()
+  //       .ref(`/${loggedUser}`)
+  //       .update({ watching: primaryPresence ? primaryPresence : selfPresence });
+  //   }
+  // }, [guestScreen]);
 
   const handleReqClose = (event, reason) => {
     if (reason === "clickaway") {
@@ -237,11 +212,152 @@ export default function YoutubeLiveView(props) {
             watching: snap.val(),
             streamReq: false,
             turnOpen: false,
+            guestPresent: true,
           });
         }
         setStreamReq(false);
       });
   };
+
+  const leaveTurn = () => {
+    firebase.database().ref(`/${anotherCreatorId}`).update({
+      streamReq: false,
+      requester: "",
+      turnOpen: true,
+      watching: primaryPresence,
+      guestPresent: false,
+    });
+    firebase.database().ref(`/${loggedUser}`).update({ guest: false });
+  };
+
+  const joinStream = async () => {
+    let presence = "";
+    await firebase
+      .database()
+      .ref(`/${anotherCreatorId}`)
+      .on("value", (snap) => {
+        if (snap.val().space === "self") {
+          setPrimaryPresence(snap.val().watching);
+          setSecondaryPresence(snap.val().being);
+          presence = snap.val().watching;
+        } else {
+          firebase
+            .database()
+            .ref(`/${snap.val().space}`)
+            .on("value", (snap1) => {
+              setPrimaryPresence(snap1.val().watching);
+              setSecondaryPresence(snap1.val().being);
+              presence = snap1.val().watching;
+            });
+        }
+        setWatchingOtherCreator(true);
+        firebase
+          .database()
+          .ref(`Creations/` + snap.val().being)
+          .update({
+            [ytPublishTime]: selfPresence,
+          });
+      });
+    await firebase.database().ref(`/${loggedUser}`).update({
+      space: anotherCreatorId,
+      // creationId: primaryPresence,
+      watching: presence,
+    });
+    handleCloseJoinModal();
+    setHost(false);
+    history.push(`/${anotherCreatorId}`);
+  };
+
+  const exitOthersStream = () => {
+    onUnmount();
+  };
+
+  const handleCreatorTurnToggle = (event) => {
+    setCreatorReleaseTurn(event.target.checked);
+  };
+
+  useEffect(() => {
+    if (!host) {
+      firebase
+        .database()
+        .ref(`/${anotherCreatorId}/turnOpen`)
+        .on("value", (snapshot) => {
+          setCreatorReleaseTurn(snapshot.val());
+        });
+    } else {
+      firebase
+        .database()
+        .ref(`/${creatorId}/streamReq`)
+        .on("value", (snapshot) => {
+          setStreamReq(snapshot.val());
+        });
+      firebase
+        .database()
+        .ref(`/${loggedUser}/watching`)
+        .on("value", (snapshot) => {
+          setSecondaryPresence(snapshot.val());
+        });
+      firebase
+        .database()
+        .ref(`/${loggedUser}/watching`)
+        .on("child_changed", (snapshot) => {
+          setSecondaryPresence(snapshot.val());
+        });
+      firebase
+        .database()
+        .ref(`/${creatorId}`)
+        .on("value", (snapshot) => {
+          setRequester(snapshot.val().requester);
+        });
+    }
+  }, [firebase.database().ref(`/${creatorId}/turnOpen`)]);
+
+  const fetchVidFromChannel = async () => {
+    const live =
+      "https://www.googleapis.com/youtube/v3/search?order=date&part=snippet&channelId=" +
+      channel +
+      "&eventType=live&type=video&key=AIzaSyDRpDTn-sFBq6be1b-8fZTdBWc3-1vwoLw";
+    const response = await fetch(live);
+    const data = await response.json();
+    console.log(data);
+    if (data.items.length === 0) {
+      alert("NO LIVE YET !!!");
+    } else {
+      var ytLiveStartTime = new Date(data.items[0].snippet.publishTime);
+      setYtPublishTime(ytLiveStartTime.getTime());
+      // alert(data.items[0].id.videoId);
+      setSelfPresence(data.items[0].id.videoId);
+      setHost(true);
+      await firebase.database().ref(`/${loggedUser}`).update({
+        being: data.items[0].id.videoId,
+        watching: data.items[0].id.videoId,
+        space: "self",
+        online: true,
+        // [data.items[0].id.videoId]: ytLiveStartTime.getTime(),
+      });
+    }
+  };
+
+  function onSwiping({ dir }) {
+    if (dir === LEFT) {
+      setGuestScreen(true);
+    } else if (dir === RIGHT) {
+      if (guestScreen) setGuestScreen(false);
+    } else if (dir === DOWN) {
+      if (!showGroups) handleClickOpenJoinModal();
+      if (showGroups && groupIndex > 0) {
+        setGroupIndex(groupIndex - 1);
+      } else if (showGroups && groupIndex === 0) {
+        setShowGroups(false);
+      }
+    } else if (dir === UP) {
+      if (!otherUsers && !showGroups) {
+        setShowGroups(true);
+      } else if (showGroups && groupIndex + 1 < groupsHost.length) {
+        setGroupIndex(groupIndex + 1);
+      }
+    }
+  }
 
   return (
     <>
@@ -252,168 +368,68 @@ export default function YoutubeLiveView(props) {
         className="swiping"
         style={{ height: "100%", overflow: "hidden" }}
       >
-        {joinAnother ? (
-          <View
-            style={{
-              height: height,
-              width: width,
-              justifyContent: "center",
-              alignItems: "center",
-            }}
-          >
-            <TextField
-              variant="outlined"
-              placeholder="Enter Creator User Id"
-              size="small"
-              value={anotherCreatorId}
-              onChange={(e) => setAnotherCreatorId(e.target.value)}
-            />
-            <Button
-              variant="contained"
-              style={{ backgroundColor: "#000", color: "#fff", marginTop: 10 }}
-              onClick={joinStream}
-            >
-              Join Stream
-            </Button>
-          </View>
-        ) : !joinAnother && watchingOther ? (
-          <View
-            style={{
-              height: height,
-              width: width,
-              justifyContent: "center",
-              alignItems: "center",
-            }}
-          >
-            {userTurnVideo && userTurnVideo !== videoId ? (
-              <YouTube
-                height={height}
-                width={width}
-                playing={true}
-                style={{
-                  position: "absolute",
-                  top: 0,
-                  left: 0,
-                  opacity: watchCreator ? 0 : 1,
-                }} // videoId={videoId}
-                url={"https://www.youtube.com/watch?v=" + userTurnVideo}
-              />
-            ) : null}
-            <YouTube
-              height={height}
-              width={width}
-              playing={true}
-              style={{
-                position: "absolute",
-                top: 0,
-                left: 0,
-                opacity: watchCreator ? 1 : 0,
-              }} // videoId={videoId}
-              url={"https://www.youtube.com/watch?v=" + videoId}
-            />
-
-            <View
-              style={{
-                position: "absolute",
-                top: 0,
-                left: 0,
-                background: "black",
-                opacity: 0.1,
-                height: "100%",
-                width: "100%",
-              }}
-            ></View>
-          </View>
-        ) : !joinAnother && loggedUser === creatorId && expression ? (
-          <>
-            <YouTube
-              height={height}
-              width={width}
-              playing={true}
-              style={{
-                position: "absolute",
-                top: 0,
-                left: 0,
-              }} // videoId={videoId}
-              url={"https://www.youtube.com/watch?v=" + userVideos[videoIndex]}
-            />
-            <View
-              style={{
-                position: "absolute",
-                top: 0,
-                left: 0,
-                background: "black",
-                opacity: 0.1,
-                height: "100%",
-                width: "100%",
-              }}
-            ></View>
-          </>
-        ) : (
-          <View
-            style={{
-              height: height,
-              width: width,
-              justifyContent: "center",
-              alignItems: "center",
-            }}
-          >
-            <YouTube
-              height={height}
-              width={width}
-              playing={true}
-              // videoId={videoId}
-              url={"https://www.youtube.com/watch?v=" + selfVid}
-            />
-            <View
-              style={{
-                position: "absolute",
-                top: 0,
-                left: 0,
-                background: "black",
-                opacity: 0.1,
-                height: "100%",
-                width: "100%",
-              }}
-            ></View>
-          </View>
-        )}
-      </Swipeable>
-      <View
-        style={{
-          position: "absolute",
-          right: 20,
-          bottom: 20,
-          padding: 10,
-          borderRadius: 12,
-          backgroundColor: "rgba(255,255,255,0.1)",
-        }}
-      >
-        {host && videoId ? (
-          <FormControlLabel
-            style={{ color: "#fff" }}
-            control={
-              <YellowSwitch
-                checked={creatorReleaseTurn}
-                onChange={handleCreatorTurnToggle}
-                name="checkedB"
-                color="primary"
-              />
-            }
-            label={creatorReleaseTurn ? "Take Turn" : "Give Turn"}
+        <View
+          style={{
+            height: height,
+            width: width,
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
+          <YoutubeComp
+            videoId={secondaryPresence}
+            opacity={guestScreen ? 1 : 0}
           />
-        ) : creatorReleaseTurn ? (
-          <Button
-            variant="contained"
-            color="default"
-            startIcon={<GroupAddIcon />}
-            onClick={sendStreamRequest}
-          >
-            Send Turn Request
+          <YoutubeComp
+            videoId={host ? selfPresence : primaryPresence}
+            opacity={guestScreen ? 0 : 1}
+          />
+        </View>
+        <View
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            background: "black",
+            opacity: 0.0,
+            height: "100%",
+            width: "100%",
+          }}
+        ></View>
+      </Swipeable>
+
+      <Dialog
+        open={openJoinModal}
+        TransitionComponent={Transition}
+        keepMounted
+        onClose={handleCloseJoinModal}
+        aria-labelledby="alert-dialog-slide-title"
+        aria-describedby="alert-dialog-slide-description"
+      >
+        <DialogTitle id="alert-dialog-slide-title">
+          {"Enter Another Creator's Id to Join their Stream."}
+        </DialogTitle>
+        <DialogContent>
+          <TextField
+            label="Enter Creator User Id"
+            size="small"
+            style={{ width: "100%" }}
+            value={anotherCreatorId}
+            onChange={(e) => setAnotherCreatorId(e.target.value)}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button variant="text" onClick={joinStream}>
+            Join Stream
           </Button>
-        ) : null}
-      </View>
-      {host ? (
+          {watchingOtherCreator && (
+            <Button variant="text" onClick={joinStream}>
+              Create Sub Group
+            </Button>
+          )}
+        </DialogActions>
+      </Dialog>
+      {host && (
         <Snackbar
           onClose={handleReqClose}
           open={streamReq && host}
@@ -440,29 +456,64 @@ export default function YoutubeLiveView(props) {
             </Button>
           </Alert>
         </Snackbar>
-      ) : null}
-      {}
-      <Dialog
-        open={openNoLiveDialog}
-        aria-labelledby="alert-dialog-title"
-        aria-describedby="alert-dialog-description"
+      )}
+      <View
+        style={{
+          position: "absolute",
+          right: 20,
+          bottom: 20,
+          padding: 10,
+          borderRadius: 12,
+          backgroundColor: "rgba(255,255,255,0.2)",
+        }}
       >
-        <DialogTitle id="alert-dialog-title">
-          {"Have you come live yet from your Youtube channel?"}
-        </DialogTitle>
-        <DialogContent>
-          <DialogContentText id="alert-dialog-description">
-            {count <= 0
-              ? "Before Hosting your stream on Achintya create your live presence from Youtube Channel."
-              : "Are you sure you are live on Youtube?"}
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleClose} color="primary" autoFocus>
-            {count <= 0 ? "Will Do it Now." : "Check Again"}
+        {watchingOtherCreator && !host && (
+          <Button
+            variant="contained"
+            color="default"
+            startIcon={<ExitToApp />}
+            onClick={exitOthersStream}
+          >
+            Exit This Stream
           </Button>
-        </DialogActions>
-      </Dialog>
+        )}
+        {host && selfPresence ? (
+          <FormControlLabel
+            style={{ color: "#fff" }}
+            control={
+              <YellowSwitch
+                checked={creatorReleaseTurn}
+                onChange={handleCreatorTurnToggle}
+                name="checkedB"
+                color="primary"
+              />
+            }
+            label={creatorReleaseTurn ? "Take Turn" : "Give Turn"}
+          />
+        ) : creatorReleaseTurn ? (
+          <Button
+            variant="contained"
+            color="primary"
+            startIcon={<GroupAdd />}
+            onClick={sendStreamRequest}
+            style={{ color: "#fff" }}
+          >
+            Send Turn Request
+          </Button>
+        ) : (
+          guest && (
+            <Button
+              variant="contained"
+              color="secondary"
+              startIcon={<PersonAddDisabled />}
+              onClick={leaveTurn}
+              style={{ color: "#fff" }}
+            >
+              Leave Turn
+            </Button>
+          )
+        )}
+      </View>
     </>
   );
 }
