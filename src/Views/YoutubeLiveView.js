@@ -59,7 +59,6 @@ export default function YoutubeLiveView(props) {
   const { creatorId } = useParams();
 
   const [loggedUser, setLoggedUser] = useState(props.creatorId);
-  const [channel, setChannel] = useState(props.channelId);
   const [host, setHost] = useState(false);
   const [guest, setGuest] = useState(false);
 
@@ -95,17 +94,23 @@ export default function YoutubeLiveView(props) {
   };
 
   useEffect(() => {
-    fetchVidFromChannel();
-    return onUnmount();
+    firebase
+      .database()
+      .ref(`/${creatorId}/videoId`)
+      .on("value", (snap) => {
+        fetchVidFromChannel(snap.val())
+      })
+    firebase
+      .database()
+      .ref("/")
+      .onDisconnect(() => {
+        onUnmount();
+      });
   }, []);
 
   const onUnmount = async () => {
     history.push(`/${loggedUser}`);
-    await setSelfPresence("");
-    await setWatchingOtherCreator(false);
-    await setPrimaryPresence("");
-    await setSecondaryPresence("");
-    await fetchVidFromChannel();
+    window.location.reload();
   };
 
   useEffect(() => {
@@ -128,23 +133,7 @@ export default function YoutubeLiveView(props) {
               setUserVideos(allVid);
             }
           });
-        if (host) {
-          console.log(loggedUser);
-          firebase
-            .database()
-            .ref(`/${loggedUser}/guestPresent`)
-            .on("value", (snapshot) => {
-              setGuest(snapshot.val());
-            });
-        } else {
-          console.log(creatorId);
-          firebase
-            .database()
-            .ref(`/${anotherCreatorId}/guestPresent`)
-            .on("value", (snapshot) => {
-              setGuest(snapshot.val());
-            });
-        }
+
         // firebase
         //   .database()
         //   .ref("/")
@@ -161,7 +150,7 @@ export default function YoutubeLiveView(props) {
   useEffect(() => {
     firebase
       .database()
-      .ref(`/${groupsHost[groupIndex]}/being`)
+      .ref(`/${groupsHost[groupIndex]}/data/being`)
       .on("value", (snap) => {
         setGroupsHostVid(snap.val());
       });
@@ -170,7 +159,7 @@ export default function YoutubeLiveView(props) {
   useEffect(() => {
     firebase
       .database()
-      .ref(`/${creatorId}`)
+      .ref(`/${creatorId}/data`)
       .update({ turnOpen: creatorReleaseTurn });
   }, [creatorReleaseTurn]);
 
@@ -198,21 +187,21 @@ export default function YoutubeLiveView(props) {
   const sendStreamRequest = () => {
     firebase
       .database()
-      .ref(`/${anotherCreatorId}`)
+      .ref(`/${anotherCreatorId}/data`)
       .update({ streamReq: true, requester: loggedUser });
   };
 
   const acceptTurnRequest = () => {
     firebase
       .database()
-      .ref(`/${requester}/being`)
+      .ref(`/${requester}/data/being`)
       .on("value", (snap) => {
         if (snap.val()) {
-          firebase.database().ref(`/${loggedUser}`).update({
+          firebase.database().ref(`/${loggedUser}/data`).update({
             watching: snap.val(),
             streamReq: false,
             turnOpen: false,
-            guestPresent: true,
+            guest: true,
           });
         }
         setStreamReq(false);
@@ -220,22 +209,22 @@ export default function YoutubeLiveView(props) {
   };
 
   const leaveTurn = () => {
-    firebase.database().ref(`/${anotherCreatorId}`).update({
+    firebase.database().ref(`/${anotherCreatorId}/data`).update({
       streamReq: false,
       requester: "",
       turnOpen: true,
       watching: primaryPresence,
-      guestPresent: false,
     });
-    firebase.database().ref(`/${loggedUser}`).update({ guest: false });
+    firebase.database().ref(`/${loggedUser}/data`).update({ guest: false });
   };
 
   const joinStream = async () => {
     let presence = "";
     await firebase
       .database()
-      .ref(`/${anotherCreatorId}`)
+      .ref(`/${anotherCreatorId}/data`)
       .on("value", (snap) => {
+        console.log(snap.val());
         if (snap.val().space === "self") {
           setPrimaryPresence(snap.val().watching);
           setSecondaryPresence(snap.val().being);
@@ -243,7 +232,7 @@ export default function YoutubeLiveView(props) {
         } else {
           firebase
             .database()
-            .ref(`/${snap.val().space}`)
+            .ref(`/${snap.val().space}/data`)
             .on("value", (snap1) => {
               setPrimaryPresence(snap1.val().watching);
               setSecondaryPresence(snap1.val().being);
@@ -251,12 +240,6 @@ export default function YoutubeLiveView(props) {
             });
         }
         setWatchingOtherCreator(true);
-        firebase
-          .database()
-          .ref(`Creations/` + snap.val().being)
-          .update({
-            [ytPublishTime]: selfPresence,
-          });
       });
     await firebase.database().ref(`/${loggedUser}`).update({
       space: anotherCreatorId,
@@ -280,43 +263,57 @@ export default function YoutubeLiveView(props) {
     if (!host) {
       firebase
         .database()
-        .ref(`/${anotherCreatorId}/turnOpen`)
+        .ref(`/${anotherCreatorId}/data/turnOpen`)
         .on("value", (snapshot) => {
           setCreatorReleaseTurn(snapshot.val());
+        });
+      firebase
+        .database()
+        .ref(`/${anotherCreatorId}/data/guest`)
+        .on("value", (snapshot) => {
+          setGuest(snapshot.val());
         });
     } else {
       firebase
         .database()
-        .ref(`/${creatorId}/streamReq`)
+        .ref(`/${creatorId}/data/streamReq`)
         .on("value", (snapshot) => {
           setStreamReq(snapshot.val());
         });
+
       firebase
         .database()
-        .ref(`/${loggedUser}/watching`)
+        .ref(`/${loggedUser}/data/guest`)
+        .on("value", (snapshot) => {
+          setGuest(snapshot.val());
+        });
+      firebase
+        .database()
+        .ref(`/${loggedUser}/data/watching`)
         .on("value", (snapshot) => {
           setSecondaryPresence(snapshot.val());
         });
       firebase
         .database()
-        .ref(`/${loggedUser}/watching`)
+        .ref(`/${loggedUser}/data/watching`)
         .on("child_changed", (snapshot) => {
           setSecondaryPresence(snapshot.val());
         });
       firebase
         .database()
-        .ref(`/${creatorId}`)
+        .ref(`/${creatorId}/data`)
         .on("value", (snapshot) => {
           setRequester(snapshot.val().requester);
         });
     }
-  }, [firebase.database().ref(`/${creatorId}/turnOpen`)]);
+  }, [firebase.database().ref(`/${creatorId}/data/turnOpen`)]);
 
-  const fetchVidFromChannel = async () => {
-    const live =
-      "https://www.googleapis.com/youtube/v3/search?order=date&part=snippet&channelId=" +
-      channel +
-      "&eventType=live&type=video&key=AIzaSyDRpDTn-sFBq6be1b-8fZTdBWc3-1vwoLw";
+  const fetchVidFromChannel = async (videoId) => {
+    // const live =
+    //   "https://www.googleapis.com/youtube/v3/search?order=date&part=snippet&channelId=" +
+    //   channel +
+    //   "&eventType=live&type=video&key=AIzaSyDRpDTn-sFBq6be1b-8fZTdBWc3-1vwoLw";
+    const live = "https://www.googleapis.com/youtube/v3/videos?part=snippet&id=" + videoId + "&key=AIzaSyDRpDTn-sFBq6be1b-8fZTdBWc3-1vwoLw";
     const response = await fetch(live);
     const data = await response.json();
     console.log(data);
@@ -326,21 +323,27 @@ export default function YoutubeLiveView(props) {
       var ytLiveStartTime = new Date(data.items[0].snippet.publishTime);
       setYtPublishTime(ytLiveStartTime.getTime());
       // alert(data.items[0].id.videoId);
-      setSelfPresence(data.items[0].id.videoId);
+      setSelfPresence(videoId);
       setHost(true);
-      await firebase.database().ref(`/${loggedUser}`).update({
-        being: data.items[0].id.videoId,
-        watching: data.items[0].id.videoId,
+      await firebase.database().ref(`/${loggedUser}/data`).update({
+        being: videoId,
+        watching: videoId,
         space: "self",
-        online: true,
-        // [data.items[0].id.videoId]: ytLiveStartTime.getTime(),
       });
+      await firebase
+        .database()
+        .ref(`/${loggedUser}/timeline`)
+        .update({
+          [Date.now()]: videoId,
+        });
     }
   };
 
   function onSwiping({ dir }) {
     if (dir === LEFT) {
-      setGuestScreen(true);
+      if(secondaryPresence){
+        setGuestScreen(true);
+      }
     } else if (dir === RIGHT) {
       if (guestScreen) setGuestScreen(false);
     } else if (dir === DOWN) {
@@ -501,18 +504,18 @@ export default function YoutubeLiveView(props) {
             Send Turn Request
           </Button>
         ) : (
-          guest && (
-            <Button
-              variant="contained"
-              color="secondary"
-              startIcon={<PersonAddDisabled />}
-              onClick={leaveTurn}
-              style={{ color: "#fff" }}
-            >
-              Leave Turn
-            </Button>
-          )
-        )}
+              guest && (
+                <Button
+                  variant="contained"
+                  color="secondary"
+                  startIcon={<PersonAddDisabled />}
+                  onClick={leaveTurn}
+                  style={{ color: "#fff" }}
+                >
+                  Leave Turn
+                </Button>
+              )
+            )}
       </View>
     </>
   );

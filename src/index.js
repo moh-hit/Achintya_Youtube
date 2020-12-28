@@ -1,11 +1,23 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import App from './App';
+import { Provider } from "react-redux";
+import { combineReducers, createStore } from "redux";
+import { composeWithDevTools } from "redux-devtools-extension";
+import globalStateReducer from "./Store/reducers/globalStateReducer";
+import globalUserDataReducer from "./Store/reducers/globalUserDataReducer";
+
+const rootReducers = combineReducers({
+  globalState: globalStateReducer,
+  globalUserData: globalUserDataReducer,
+});
+
+const store = createStore(rootReducers, composeWithDevTools());
 
 ReactDOM.render(
-  <React.StrictMode>
+  <Provider store={store}>
     <App />
-  </React.StrictMode>,
+  </Provider>,
   document.getElementById('root')
 );
 
