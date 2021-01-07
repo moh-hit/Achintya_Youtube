@@ -72,12 +72,21 @@ export default function CreatorView() {
 
   const handleStartEventNow = async () => {
     firebase.database().ref(`/${creatorId}`).update({
-      videoId: videoId,
+      being: videoId,
     })
     handleClose();
     setLive(true)
   }
+  const getCountDown = (sTime) => {
+    return parseInt(( sTime * 1000 - Date.now())/3600)
+  }
+  useEffect(() => {
 
+    setInterval(() => {
+      getCountDown();
+    }, 1000);
+
+  })
   useEffect(() => {
     if (timeNow) {
       // firebase
@@ -103,7 +112,7 @@ export default function CreatorView() {
       setScheduledEvents(snap.val())
     })
   }, [])
-
+  var newDate = new Date();
   return live ? (
     <YoutubeLiveView videoId={videoId} creatorId={creatorId} />
   ) : !loading ? (
@@ -131,7 +140,7 @@ export default function CreatorView() {
       <View style={{
         flexDirection: "row",
         width: width,
-        justifyContent: "space-evenly",
+        justifyContent: "center",
         alignItems: "center",
       }}>
         {scheduledEvents && Object.keys(scheduledEvents).map((key, index) => {
@@ -140,6 +149,9 @@ export default function CreatorView() {
             <CardContent>
               <Typography className={classes.title} color="textSecondary" gutterBottom>
                 {date}
+              </Typography>
+              <Typography variant="h2" component="h2">
+                {getCountDown(key)}
               </Typography>
               <Typography variant="h5" component="h2">
                 {scheduledEvents[key]}
