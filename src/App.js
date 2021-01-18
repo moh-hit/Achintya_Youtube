@@ -1,10 +1,14 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
 import CreatorView from "./Views/CreatorView";
 import CreationView from "./Views/CreationView";
 import Home from "./Views/Home";
 
+
+
+
 export default function App() {
+
   return (
     <Router>
       <Switch>

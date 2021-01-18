@@ -36,7 +36,14 @@
       }
     </style>
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
-  </head>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('./firebase-messaging-sw.js');
+        });
+      }
+    </script>
+      </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>

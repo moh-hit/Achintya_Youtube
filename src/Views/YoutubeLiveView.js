@@ -10,7 +10,7 @@ import {
   DOWN,
 } from "react-swipeable";
 import { TextField, Button, setRef } from "@material-ui/core";
-import firebase from "../config";
+import firebase from "firebase";
 import { useHistory } from "react-router-dom";
 import { useParams } from "react-router-dom";
 import YoutubeComp from "../Components/YoutubeComp";

@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import firebase from "../config";
 import { useParams } from "react-router-dom";
 import { TextField, Button, Card, CardContent, CardActions, makeStyles, Typography } from "@material-ui/core";
 import { Dimensions, View } from "react-native";
@@ -9,7 +8,7 @@ import DialogActions from '@material-ui/core/DialogActions';
 import DialogContent from '@material-ui/core/DialogContent';
 import DialogContentText from '@material-ui/core/DialogContentText';
 import DialogTitle from '@material-ui/core/DialogTitle';
-import firebaseapp from 'firebase';
+import firebase from 'firebase';
 
 
 const { width, height } = Dimensions.get("window");
@@ -186,7 +185,7 @@ export default function CreatorView() {
               label="Next appointment"
               type="datetime-local"
               // defaultValue={Date.now().toLocaleString()}
-              onChange={e => setScheduledDate(firebaseapp.firestore.Timestamp.fromDate(new Date(e.target.value)).seconds)}
+              onChange={e => setScheduledDate(firebase.firestore.Timestamp.fromDate(new Date(e.target.value)).seconds)}
               InputLabelProps={{
                 shrink: true,
               }}

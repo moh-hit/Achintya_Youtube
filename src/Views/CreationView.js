@@ -247,7 +247,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { TextInput, View, Dimensions } from "react-native";
 import YouTube from "react-player";
-import firebase from "../config";
+import firebase from "firebase";
 import {
   useSwipeable,
   Swipeable,
