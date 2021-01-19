@@ -69,6 +69,8 @@ export default function YoutubeLiveView(props) {
   const [otherUsers, setOtherUsers] = useState(false);
   const [guestScreen, setGuestScreen] = useState(false);
   const [watchingOtherCreator, setWatchingOtherCreator] = useState(false);
+  const [donationScreen, setDonationScreen] = useState(false);
+  const [textScreen, setTextScreen] = useState(false);
 
   const [usersVideos, setUserVideos] = useState([]);
   const [currentUserVideosIndex, setCurrentUserVideosIndex] = useState(0);
@@ -98,8 +100,8 @@ export default function YoutubeLiveView(props) {
       .database()
       .ref(`/${creatorId}/being`)
       .on("value", (snap) => {
-        fetchVidFromChannel(snap.val())
-      })
+        fetchVidFromChannel(snap.val());
+      });
     return firebase
       .database()
       .ref("/")
@@ -261,14 +263,14 @@ export default function YoutubeLiveView(props) {
         .on("value", (snapshot) => {
           setGuest(snapshot.val());
         });
-        if(guest === loggedUser){
-          firebase
+      if (guest === loggedUser) {
+        firebase
           .database()
           .ref(`/${anotherCreatorId}/data/being`)
           .on("value", (snapshot) => {
-            setPrimaryPresence(snapshot.val())
+            setPrimaryPresence(snapshot.val());
           });
-        }
+      }
     } else {
       firebase
         .database()
@@ -309,14 +311,17 @@ export default function YoutubeLiveView(props) {
     //   "https://www.googleapis.com/youtube/v3/search?order=date&part=snippet&channelId=" +
     //   channel +
     //   "&eventType=live&type=video&key=AIzaSyDRpDTn-sFBq6be1b-8fZTdBWc3-1vwoLw";
-    const live = "https://www.googleapis.com/youtube/v3/videos?part=snippet&id=" + videoId + "&key=AIzaSyDReEVZ4A6hTOvAK4HduYlt14Exm5iTR00";
+    const live =
+      "https://www.googleapis.com/youtube/v3/videos?part=snippet&id=" +
+      videoId +
+      "&key=AIzaSyDReEVZ4A6hTOvAK4HduYlt14Exm5iTR00";
     const response = await fetch(live);
     const data = await response.json();
     console.log(data);
     if (data.items.length === 0) {
       alert("NO LIVE YET !!!");
     } else {
-      console.log(videoId)
+      console.log(videoId);
       var ytLiveStartTime = new Date(data.items[0].snippet.publishTime);
       setYtPublishTime(ytLiveStartTime.getTime());
       // alert(data.items[0].id.videoId);
@@ -341,9 +346,18 @@ export default function YoutubeLiveView(props) {
     if (dir === LEFT) {
       if (secondaryPresence) {
         setGuestScreen(true);
+      } else if (!donationScreen) {
+        setDonationScreen(true);
+      } else if (!textScreen) {
+        setTextScreen(true);
       }
     } else if (dir === RIGHT) {
       if (guestScreen) setGuestScreen(false);
+      else if (textScreen) {
+        setTextScreen(false);
+      } else if (donationScreen) {
+        setDonationScreen(false);
+      }
     } else if (dir === DOWN) {
       if (!showGroups) handleClickOpenJoinModal();
       if (showGroups && groupIndex > 0) {
@@ -377,10 +391,7 @@ export default function YoutubeLiveView(props) {
             alignItems: "center",
           }}
         >
-          <YoutubeComp
-            videoId={primaryPresence}
-            opacity={1}
-          />
+          <YoutubeComp videoId={primaryPresence} opacity={1} />
           {/* <YoutubeComp
             videoId={host ? selfPresence : primaryPresence}
             opacity={guestScreen ? 0 : 1}
@@ -397,6 +408,39 @@ export default function YoutubeLiveView(props) {
             width: "100%",
           }}
         ></View>
+
+        {donationScreen && (
+          <View
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              backgroundColor: "#fff",
+              height: height,
+              width: width,
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
+            <Button>ENJOYING EVENT? DONATE TO CREATOR</Button>
+          </View>
+        )}
+        {textScreen && (
+          <View
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              backgroundColor: "#fff",
+              height: height,
+              width: width,
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
+            <h2>Text SCREEN WILL BE HERE</h2>
+          </View>
+        )}
       </Swipeable>
 
       <Dialog
@@ -502,18 +546,19 @@ export default function YoutubeLiveView(props) {
             Send Turn Request
           </Button>
         ) : (
-              guest === loggedUser && !host && (
-                <Button
-                  variant="contained"
-                  color="secondary"
-                  startIcon={<PersonAddDisabled />}
-                  onClick={leaveTurn}
-                  style={{ color: "#fff" }}
-                >
-                  Leave Turn
-                </Button>
-              )
-            )}
+          guest === loggedUser &&
+          !host && (
+            <Button
+              variant="contained"
+              color="secondary"
+              startIcon={<PersonAddDisabled />}
+              onClick={leaveTurn}
+              style={{ color: "#fff" }}
+            >
+              Leave Turn
+            </Button>
+          )
+        )}
       </View>
     </>
   );
