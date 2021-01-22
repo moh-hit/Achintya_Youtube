@@ -6,6 +6,7 @@ import { combineReducers, createStore } from "redux";
 import { composeWithDevTools } from "redux-devtools-extension";
 import globalStateReducer from "./Store/reducers/globalStateReducer";
 import globalUserDataReducer from "./Store/reducers/globalUserDataReducer";
+import './Style/index.css';
 
 const rootReducers = combineReducers({
   globalState: globalStateReducer,

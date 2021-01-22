@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Dimensions, View } from "react-native";
 import { TextField, IconButton, Button } from "@material-ui/core";
-import { ArrowForward, AccountCircle } from "@material-ui/icons";
+import { AccountCircleOutlined, AccountCircle } from "@material-ui/icons";
 import { useHistory } from "react-router-dom";
 // import { messaging, database, auth } from "../config";
 import swal from "sweetalert";
@@ -11,16 +11,24 @@ import useActionDispatcher from "../Hooks/useActionDispatcher";
 import { SET_KEYS_TRUE, UPDATE_USER_DATA } from "../Store/actions";
 import firebaseapp from "firebase";
 import Loading from "../Components/Loading";
+import { useParams } from "react-router-dom";
 
 const { width, height } = Dimensions.get("window");
 
 export default function Home() {
+  const { creatorId } = useParams();
   const history = useHistory();
   const userData = useSelector((state) => state.globalUserData);
   const dispatchAction = useActionDispatcher();
 
   const [profileId, setProfileId] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (creatorId === "profile") {
+      history.push(`/`);
+    }
+  }, []);
 
   useEffect(() => {
     messaging
