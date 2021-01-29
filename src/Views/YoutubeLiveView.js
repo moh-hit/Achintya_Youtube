@@ -29,6 +29,7 @@ import { GroupAdd, PersonAddDisabled, ExitToApp } from "@material-ui/icons";
 import MuiAlert from "@material-ui/lab/Alert";
 import { withStyles } from "@material-ui/core/styles";
 import { yellow } from "@material-ui/core/colors";
+import VideoRoom from './VideoRoom';
 
 const Transition = React.forwardRef(function Transition(props, ref) {
   return <Slide direction="down" ref={ref} {...props} />;
@@ -86,6 +87,7 @@ export default function YoutubeLiveView(props) {
   const [groupsHost, setGroupsHost] = useState([]);
   const [groupIndex, setGroupIndex] = useState(0);
   const [groupHostVid, setGroupsHostVid] = useState("");
+  const [videoCallScreen, setVideoCallScreen] = useState(false);
 
   const handleClickOpenJoinModal = () => {
     setOpenJoinModal(true);
@@ -346,6 +348,8 @@ export default function YoutubeLiveView(props) {
     if (dir === LEFT) {
       if (secondaryPresence) {
         setGuestScreen(true);
+      } else if (!videoCallScreen) {
+        setVideoCallScreen(true);
       } else if (!donationScreen) {
         setDonationScreen(true);
       } else if (!textScreen) {
@@ -357,6 +361,8 @@ export default function YoutubeLiveView(props) {
         setTextScreen(false);
       } else if (donationScreen) {
         setDonationScreen(false);
+      } else if (videoCallScreen) {
+        setVideoCallScreen(false);
       }
     } else if (dir === DOWN) {
       if (!showGroups) handleClickOpenJoinModal();
@@ -408,7 +414,26 @@ export default function YoutubeLiveView(props) {
             width: "100%",
           }}
         ></View>
-
+        {videoCallScreen && (
+          <View
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              backgroundColor: "#fff",
+              height: height,
+              width: width,
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
+            <VideoRoom
+              username={creatorId}
+              spaceOwner={false}
+              creator={false}
+            />
+          </View>
+        )}
         {donationScreen && (
           <View
             style={{

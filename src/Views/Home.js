@@ -113,7 +113,7 @@ export default function Home() {
                       });
                       await firebaseapp
                         .database()
-                        .ref(`/Space/${profileId}/wallet`)
+                        .ref(`${profileId}`)
                         .update({
                           balance: doc.data().paidAmount,
                         })
