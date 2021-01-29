@@ -9,6 +9,7 @@
     },
     "homepage": "./",
     "dependencies": {
+        "@babel/plugin-syntax-jsx": "^7.12.1",
         "@firebase/messaging": "^0.7.3",
         "@material-ui/core": "^4.11.0",
         "@material-ui/icons": "^4.9.1",
@@ -23,6 +24,7 @@
         "react-dom": "^17.0.1",
         "react-loader-spinner": "^3.1.14",
         "react-native": "^0.63.3",
+        "react-native-elements": "^3.1.0",
         "react-native-web": "^0.14.8",
         "react-player": "^2.6.2",
         "react-redux": "^7.2.2",

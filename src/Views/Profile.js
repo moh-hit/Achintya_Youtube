@@ -52,8 +52,6 @@ export default function Profile() {
     fetchUser();
   }, []);
 
-  useEffect(() => {}, []);
-
   return (
     <div
       style={{

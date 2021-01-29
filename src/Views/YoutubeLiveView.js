@@ -29,6 +29,7 @@ import { GroupAdd, PersonAddDisabled, ExitToApp } from "@material-ui/icons";
 import MuiAlert from "@material-ui/lab/Alert";
 import { withStyles } from "@material-ui/core/styles";
 import { yellow } from "@material-ui/core/colors";
+import VideoRoom from './VideoRoom'
 
 const Transition = React.forwardRef(function Transition(props, ref) {
   return <Slide direction="down" ref={ref} {...props} />;
@@ -391,7 +392,7 @@ export default function YoutubeLiveView(props) {
             alignItems: "center",
           }}
         >
-          <YoutubeComp videoId={primaryPresence} opacity={1} />
+        <VideoRoom username={creatorId} spaceOwner={true} creator={true} />
           {/* <YoutubeComp
             videoId={host ? selfPresence : primaryPresence}
             opacity={guestScreen ? 0 : 1}

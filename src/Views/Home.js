@@ -251,9 +251,6 @@ export default function Home() {
         onChange={(e) => setProfileId(e.target.value)}
         onSubmit={visitCreator}
       />
-      {/* <IconButton onClick={visitCreator} aria-label="delete" size="small">
-        <ArrowForward style={{ fontSize: 40, margin: 15, color: "black" }} />
-      </IconButton> */}
       <Button
         variant="outlined"
         startIcon={<AccountCircle style={{ color: "black" }} />}

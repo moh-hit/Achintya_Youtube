@@ -20,6 +20,7 @@ import firebase from "firebase";
 import { useHistory } from "react-router-dom";
 import { AccountCircleOutlined } from "@material-ui/icons";
 
+
 const { width, height } = Dimensions.get("window");
 
 const useStyles = makeStyles({
@@ -162,13 +163,6 @@ export default function CreatorView() {
         >
           Create Event
         </Button>
-        <Button
-          style={{ fontSize: 30 }}
-          color="secondary"
-          onClick={() => history.push(`/createStatus/${creatorId}`)}
-        >
-          Create Status
-        </Button>
       </View>
 
       <Dialog
@@ -197,22 +191,4 @@ export default function CreatorView() {
   ) : loading ? (
     <h2>LOADING....</h2>
   ) : null;
-}
-
-{
-  /* <h3 style={{ textTransform: "uppercase" }}>Enter the video id of your Scheduled Youtube live Event</h3>
-<TextField
-  variant="standard"
-  placeholder="Enter Video Id"
-  size="small"
-  value={videoId}
-  onChange={(e) => setVideoId(e.target.value)}
-/>
-<Button
-  variant="contained"
-  style={{ backgroundColor: "#000", color: "#fff", marginTop: 10 }}
-  onClick={hostLiveCreation}
->
-  Register For Event
-</Button> */
 }
