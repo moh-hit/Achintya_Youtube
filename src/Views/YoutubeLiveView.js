@@ -148,7 +148,7 @@ export default function YoutubeLiveView(props) {
         //     setGroupsHost(Object.keys(snapshot.val()));
         //   });
       });
-      if(guest && guest !== logged){
+      if(guest && guest !== loggedUser){
         setYoutubeScreen(true);
         setVideoCallScreen(false);
       }
@@ -396,7 +396,7 @@ export default function YoutubeLiveView(props) {
         style={{ height: "100%", overflow: "hidden" }}
       >
        
-        {!host && youtubeScreen && (
+        {(!host && youtubeScreen) ? (
           <>
             <View
               style={{
@@ -424,8 +424,7 @@ export default function YoutubeLiveView(props) {
               }}
             ></View>
           </>
-        )}
-         {((host && videoCallScreen) || (!host && guest === loggedUser)) && (
+        ) : ((host && videoCallScreen) || (!host && guest === loggedUser)) ? (
           <View
             style={{
               position: "absolute",
@@ -444,7 +443,8 @@ export default function YoutubeLiveView(props) {
               creator={false}
             />
           </View>
-        )}
+        ) : <h1>NO VID</h1>}
+         
         {donationScreen && (
           <View
             style={{
