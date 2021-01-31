@@ -422,7 +422,7 @@ export default function YoutubeLiveView(props) {
             ></View>
           </>
         )}
-         {((host && videoCallScreen) || (!host && guest)) && (
+         {((host && videoCallScreen) || (!host && guest === loggedUser)) && (
           <View
             style={{
               position: "absolute",
