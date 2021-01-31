@@ -148,7 +148,10 @@ export default function YoutubeLiveView(props) {
         //     setGroupsHost(Object.keys(snapshot.val()));
         //   });
       });
-
+      if(guest && guest !== logged){
+        setYoutubeScreen(true);
+        setVideoCallScreen(false);
+      }
     // firebase.database().ref(`/${loggedUser}`).onDisconnect().remove();
   });
 
