@@ -29,7 +29,7 @@ import { GroupAdd, PersonAddDisabled, ExitToApp } from "@material-ui/icons";
 import MuiAlert from "@material-ui/lab/Alert";
 import { withStyles } from "@material-ui/core/styles";
 import { yellow } from "@material-ui/core/colors";
-import VideoRoom from './VideoRoom';
+import VideoRoom from "./VideoRoom";
 
 const Transition = React.forwardRef(function Transition(props, ref) {
   return <Slide direction="down" ref={ref} {...props} />;
@@ -88,6 +88,7 @@ export default function YoutubeLiveView(props) {
   const [groupIndex, setGroupIndex] = useState(0);
   const [groupHostVid, setGroupsHostVid] = useState("");
   const [videoCallScreen, setVideoCallScreen] = useState(false);
+  const [youtubeScreen, setYoutubeScreen] = useState(false);
 
   const handleClickOpenJoinModal = () => {
     setOpenJoinModal(true);
@@ -253,6 +254,7 @@ export default function YoutubeLiveView(props) {
 
   useEffect(() => {
     if (!host) {
+      setYoutubeScreen(true);
       firebase
         .database()
         .ref(`/${anotherCreatorId}/data/turnOpen`)
@@ -274,6 +276,7 @@ export default function YoutubeLiveView(props) {
           });
       }
     } else {
+      setVideoCallScreen(true);
       firebase
         .database()
         .ref(`/${creatorId}/data/streamReq`)
@@ -389,32 +392,37 @@ export default function YoutubeLiveView(props) {
         className="swiping"
         style={{ height: "100%", overflow: "hidden" }}
       >
-        <View
-          style={{
-            height: height,
-            width: width,
-            justifyContent: "center",
-            alignItems: "center",
-          }}
-        >
-          <YoutubeComp videoId={primaryPresence} opacity={1} />
-          {/* <YoutubeComp
+       
+        {!host && youtubeScreen && (
+          <>
+            <View
+              style={{
+                height: height,
+                width: width,
+                justifyContent: "center",
+                alignItems: "center",
+              }}
+            >
+              <YoutubeComp videoId={primaryPresence} opacity={1} />
+              {/* <YoutubeComp
             videoId={host ? selfPresence : primaryPresence}
             opacity={guestScreen ? 0 : 1}
           /> */}
-        </View>
-        <View
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            background: "black",
-            opacity: 0.0,
-            height: "100%",
-            width: "100%",
-          }}
-        ></View>
-        {videoCallScreen && (
+            </View>
+            <View
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                background: "black",
+                opacity: 0.0,
+                height: "100%",
+                width: "100%",
+              }}
+            ></View>
+          </>
+        )}
+         {((host && videoCallScreen) || (!host && guest)) && (
           <View
             style={{
               position: "absolute",
