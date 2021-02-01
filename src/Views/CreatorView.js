@@ -88,7 +88,7 @@ export default function CreatorView() {
     var gauthUid = firebase.auth().currentUser;
     firebase
       .database()
-      .ref(`${loggedUser}/uid`)
+      .ref(`${creatorId}/uid`)
       .on("value", (snap) => {
         if (snap.val() !== gauthUid) {
           setLive(true);
