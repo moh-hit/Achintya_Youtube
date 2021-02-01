@@ -119,6 +119,20 @@ export default function YoutubeLiveView(props) {
   };
 
   useEffect(() => {
+    var gauthUid = firebase.auth().currentUser;
+    firebase
+      .database()
+      .ref(`${loggedUser}/uid`)
+      .on("value", (snap) => {
+        if (snap.val() === gauthUid) {
+          setHost(true);
+        } else {
+          setHost(false);
+        }
+      });
+  }, [creatorId]);
+
+  useEffect(() => {
     firebase
       .database()
       .ref("/")
@@ -148,10 +162,10 @@ export default function YoutubeLiveView(props) {
         //     setGroupsHost(Object.keys(snapshot.val()));
         //   });
       });
-      if(guest && guest !== loggedUser){
-        setYoutubeScreen(true);
-        setVideoCallScreen(false);
-      }
+    if (guest && guest !== loggedUser) {
+      setYoutubeScreen(true);
+      setVideoCallScreen(false);
+    }
     // firebase.database().ref(`/${loggedUser}`).onDisconnect().remove();
   });
 
@@ -395,8 +409,7 @@ export default function YoutubeLiveView(props) {
         className="swiping"
         style={{ height: "100%", overflow: "hidden" }}
       >
-       
-        {(!host && youtubeScreen) ? (
+        {!host && youtubeScreen ? (
           <>
             <View
               style={{
@@ -424,7 +437,7 @@ export default function YoutubeLiveView(props) {
               }}
             ></View>
           </>
-        ) : ((host && videoCallScreen) || (!host && guest === loggedUser)) ? (
+        ) : (host && videoCallScreen) || (!host && guest === loggedUser) ? (
           <View
             style={{
               position: "absolute",
@@ -443,8 +456,10 @@ export default function YoutubeLiveView(props) {
               creator={false}
             />
           </View>
-        ) : <h1>NO VID</h1>}
-         
+        ) : (
+          <h1>NO VID</h1>
+        )}
+
         {donationScreen && (
           <View
             style={{

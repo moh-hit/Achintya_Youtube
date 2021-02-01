@@ -84,6 +84,18 @@ export default function CreatorView() {
     handleClose();
   };
 
+  useEffect(() => {
+    var gauthUid = firebase.auth().currentUser;
+    firebase
+      .database()
+      .ref(`${loggedUser}/uid`)
+      .on("value", (snap) => {
+        if (snap.val() !== gauthUid) {
+          setLive(true);
+        } 
+      });
+  }, [creatorId]);
+
   const handleStartEventNow = async () => {
     firebase.database().ref(`/${creatorId}`).update({
       being: videoId,
@@ -132,7 +144,7 @@ export default function CreatorView() {
   }, []);
   var newDate = new Date();
   return live ? (
-    <YoutubeLiveView videoId={videoId} creatorId={creatorId} />
+    <YoutubeLiveView creatorId={creatorId} />
   ) : !loading ? (
     <View
       style={{
