@@ -106,14 +106,17 @@ export default function Home() {
                       doc.data().status === 1
                     ) {
                       console.log(userDetails);
-                      await firebaseapp.database().ref(`/${profileId}`).update({
-                        name: userDetails["displayName"],
-                        email: userDetails["email"],
-                        uid: userDetails["uid"],
-                      });
                       await firebaseapp
                         .database()
-                        .ref(`${profileId}`)
+                        .ref(`/${userDetails["uid"]}`)
+                        .update({
+                          name: userDetails["displayName"],
+                          email: userDetails["email"],
+                          uid: userDetails["uid"],
+                        });
+                      await firebaseapp
+                        .database()
+                        .ref(`${userDetails["uid"]}`)
                         .update({
                           balance: doc.data().paidAmount,
                         })
@@ -133,7 +136,7 @@ export default function Home() {
                               data: {
                                 creator: true,
                                 is_creator: true,
-                                user_id: profileId,
+                                user_id: userDetails["uid"],
                               },
                             });
                             messaging
@@ -142,7 +145,7 @@ export default function Home() {
                                 console.log("permission granted");
                                 firebaseapp
                                   .database()
-                                  .ref(`/${profileId}`)
+                                  .ref(`/${userDetails["uid"]}`)
                                   .update({
                                     online: true,
                                   });
@@ -151,12 +154,12 @@ export default function Home() {
                               .then((token) => {
                                 firebaseapp
                                   .database()
-                                  .ref(`/${profileId}`)
+                                  .ref(`/${userDetails["uid"]}`)
                                   .update({
                                     token: token,
                                   });
                               });
-                            history.push(`/${profileId}`);
+                            history.push(`/${userDetails["uid"]}`);
                           });
                         });
                     } else {
@@ -187,48 +190,52 @@ export default function Home() {
   };
 
   const googleLogin = async () => {
-    firebaseapp
-      .database()
-      .ref(`${profileId}`)
-      .once("value", (snap) => {
-        if (!firebaseapp.auth().currentUser && !snap.val()) {
-          var provider = new firebaseapp.auth.GoogleAuthProvider();
-          firebaseapp
-            .auth()
-            .signInWithPopup(provider)
-            .then(function (result) {
-              const token = result.credential.accessToken;
-              const user = result.user;
-              console.log(user);
-              openCheckout(user);
-            })
-            .catch(function (error) {
-              const errorcode = error.code;
-              const errorMessage = error.message;
-              const email = error.email;
-              const credential = error.credential;
-              console.log(errorMessage, errorcode);
-            });
-        } else {
-          var loggedInUser = firebaseapp.auth().currentUser;
-          console.log(loggedInUser);
+    if (!firebaseapp.auth().currentUser) {
+      var provider = new firebaseapp.auth.GoogleAuthProvider();
+      firebaseapp
+        .auth()
+        .signInWithPopup(provider)
+        .then(function (result) {
+          const token = result.credential.accessToken;
+          const user = result.user;
+          console.log(user);
           firebaseapp
             .database()
-            .ref(`${profileId}`)
-            .once("value", (snap) => {
+            .ref(`/${user["uid"]}`)
+            .on("value", (snap) => {
               if (snap.val()) {
-                dispatchAction(UPDATE_USER_DATA, {
-                  data: {
-                    user_id: profileId,
-                  },
-                });
-                history.push(`/${profileId}`);
+                openCheckout(user["uid"]);
               } else {
-                openCheckout(loggedInUser);
+                history.push(`/${user["uid"]}`);
               }
             });
-        }
-      });
+        })
+        .catch(function (error) {
+          const errorcode = error.code;
+          const errorMessage = error.message;
+          const email = error.email;
+          const credential = error.credential;
+          console.log(errorMessage, errorcode);
+        });
+    } else {
+      var loggedInUser = firebaseapp.auth().currentUser;
+      console.log(loggedInUser);
+      firebaseapp
+        .database()
+        .ref(`${loggedInUser.uid}`)
+        .once("value", (snap) => {
+          if (snap.val()) {
+            dispatchAction(UPDATE_USER_DATA, {
+              data: {
+                user_id: loggedInUser.uid,
+              },
+            });
+            history.push(`/${loggedInUser.uid}`);
+          } else {
+            openCheckout(loggedInUser);
+          }
+        });
+    }
   };
 
   return loading ? (
@@ -243,14 +250,14 @@ export default function Home() {
         alignItems: "center",
       }}
     >
-      <TextField
+      {/* <TextField
         variant="outlined"
         placeholder="Enter Profile Id"
         size="small"
         value={profileId}
         onChange={(e) => setProfileId(e.target.value)}
         onSubmit={visitCreator}
-      />
+      /> */}
       {/* <IconButton onClick={visitCreator} aria-label="delete" size="small">
         <ArrowForward style={{ fontSize: 40, margin: 15, color: "black" }} />
       </IconButton> */}

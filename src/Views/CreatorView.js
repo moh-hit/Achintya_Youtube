@@ -54,12 +54,6 @@ export default function CreatorView() {
   const [liveModal, setLiveModal] = useState(false);
   const [scheduledEvents, setScheduledEvents] = useState({});
 
-  useEffect(() => {
-    if (creatorId === "profile") {
-      history.push(`/`);
-    }
-  }, []);
-
   const handleClickOpen = (modalType) => {
     setLiveModal(modalType);
     setOpen(true);
@@ -86,14 +80,10 @@ export default function CreatorView() {
 
   useEffect(() => {
     var gauthUid = firebase.auth().currentUser;
-    firebase
-      .database()
-      .ref(`${creatorId}/uid`)
-      .on("value", (snap) => {
-        if (snap.val() !== gauthUid) {
-          setLive(true);
-        } 
-      });
+
+    if (creatorId != gauthUid.uid) {
+      setLive(true);
+    }
   }, [creatorId]);
 
   const handleStartEventNow = async () => {
@@ -154,10 +144,10 @@ export default function CreatorView() {
         alignItems: "center",
       }}
     >
-      <div style={{position: "fixed", top: 16, right: 16}}>
-      <IconButton onClick={() => history.push(`/profile/${creatorId}`)}>
-        <AccountCircleOutlined style={{fontSize: 30}} />
-      </IconButton>
+      <div style={{ position: "fixed", top: 16, right: 16 }}>
+        {/* <IconButton onClick={() => history.push(`/profile/${creatorId}`)}>
+          <AccountCircleOutlined style={{ fontSize: 30 }} />
+        </IconButton> */}
       </div>
       <View
         style={{
@@ -174,13 +164,13 @@ export default function CreatorView() {
         >
           Create Event
         </Button>
-        <Button
+        {/* <Button
           style={{ fontSize: 30 }}
           color="secondary"
           onClick={() => history.push(`/createStatus/${creatorId}`)}
         >
           Create Status
-        </Button>
+        </Button> */}
       </View>
 
       <Dialog
