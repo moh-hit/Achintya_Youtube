@@ -224,16 +224,13 @@ export default function Home() {
         .database()
         .ref(`${loggedInUser.uid}`)
         .once("value", (snap) => {
-          if (snap.val()) {
+
             dispatchAction(UPDATE_USER_DATA, {
               data: {
                 user_id: loggedInUser.uid,
               },
             });
             history.push(`/${loggedInUser.uid}`);
-          } else {
-            openCheckout(loggedInUser);
-          }
         });
     }
   };

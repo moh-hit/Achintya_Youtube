@@ -44,6 +44,7 @@ export default function CreatorView() {
   const history = useHistory();
 
   const [creator, setCreator] = useState({});
+  const [host, setHost] = useState(false);
   const [videoId, setVideoId] = useState("");
   const [timeNow, setTimeNow] = useState("");
   const [live, setLive] = useState(false);
@@ -80,9 +81,13 @@ export default function CreatorView() {
 
   useEffect(() => {
     var gauthUid = firebase.auth().currentUser;
-
+    console.log(gauthUid.uid,creatorId)
     if (creatorId != gauthUid.uid) {
       setLive(true);
+      setHost(false);
+    }
+    else{
+        setHost(true);
     }
   }, [creatorId]);
 
@@ -103,10 +108,6 @@ export default function CreatorView() {
   });
   useEffect(() => {
     if (timeNow) {
-      // firebase
-      //   .database()
-      //   .ref(`/${creatorId}/timeline`)
-      //   .update({ [timeNow]: videoId });
       firebase
         .database()
         .ref(`/${creatorId}`)
@@ -116,10 +117,6 @@ export default function CreatorView() {
         .then(() => {
           setLive(true);
         });
-      // firebase
-      //   .database()
-      //   .ref(`/Creations/${timeNow}`)
-      //   .update({ [creatorId]: videoId });
     }
   }, [timeNow]);
 
@@ -133,8 +130,8 @@ export default function CreatorView() {
       });
   }, []);
   var newDate = new Date();
-  return live ? (
-    <YoutubeLiveView creatorId={creatorId} />
+  return live ? (host?
+    <YoutubeLiveView creatorId={creatorId} host={true}/>:<YoutubeLiveView creatorId={creatorId} host={false}/>
   ) : !loading ? (
     <View
       style={{
@@ -145,9 +142,6 @@ export default function CreatorView() {
       }}
     >
       <div style={{ position: "fixed", top: 16, right: 16 }}>
-        {/* <IconButton onClick={() => history.push(`/profile/${creatorId}`)}>
-          <AccountCircleOutlined style={{ fontSize: 30 }} />
-        </IconButton> */}
       </div>
       <View
         style={{
@@ -164,13 +158,6 @@ export default function CreatorView() {
         >
           Create Event
         </Button>
-        {/* <Button
-          style={{ fontSize: 30 }}
-          color="secondary"
-          onClick={() => history.push(`/createStatus/${creatorId}`)}
-        >
-          Create Status
-        </Button> */}
       </View>
 
       <Dialog
@@ -199,22 +186,4 @@ export default function CreatorView() {
   ) : loading ? (
     <h2>LOADING....</h2>
   ) : null;
-}
-
-{
-  /* <h3 style={{ textTransform: "uppercase" }}>Enter the video id of your Scheduled Youtube live Event</h3>
-<TextField
-  variant="standard"
-  placeholder="Enter Video Id"
-  size="small"
-  value={videoId}
-  onChange={(e) => setVideoId(e.target.value)}
-/>
-<Button
-  variant="contained"
-  style={{ backgroundColor: "#000", color: "#fff", marginTop: 10 }}
-  onClick={hostLiveCreation}
->
-  Register For Event
-</Button> */
 }

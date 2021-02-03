@@ -60,8 +60,9 @@ export default function YoutubeLiveView(props) {
   const { creatorId } = useParams();
 
   const [loggedUser, setLoggedUser] = useState(props.creatorId);
-  const [host, setHost] = useState(false);
+  const [host, setHost] = useState(props.host);
   const [guest, setGuest] = useState(false);
+  const [turn, setTurn] = useState(false);
 
   const [selfPresence, setSelfPresence] = useState("");
   const [secondaryPresence, setSecondaryPresence] = useState("");
@@ -120,16 +121,6 @@ export default function YoutubeLiveView(props) {
 
   useEffect(() => {
     var gauthUid = firebase.auth().currentUser;
-    firebase
-      .database()
-      .ref(`${loggedUser}/uid`)
-      .on("value", (snap) => {
-        if (snap.val() === gauthUid) {
-          setHost(true);
-        } else {
-          setHost(false);
-        }
-      });
   }, [creatorId]);
 
   useEffect(() => {
@@ -184,20 +175,6 @@ export default function YoutubeLiveView(props) {
       .ref(`/${creatorId}/data`)
       .update({ turnOpen: creatorReleaseTurn });
   }, [creatorReleaseTurn]);
-
-  // useEffect(() => {
-  //   if (guestScreen) {
-  //     firebase
-  //       .database()
-  //       .ref(`/${loggedUser}`)
-  //       .update({ watching: secondaryPresence });
-  //   } else {
-  //     firebase
-  //       .database()
-  //       .ref(`/${loggedUser}`)
-  //       .update({ watching: primaryPresence ? primaryPresence : selfPresence });
-  //   }
-  // }, [guestScreen]);
 
   const handleReqClose = (event, reason) => {
     if (reason === "clickaway") {
@@ -285,6 +262,7 @@ export default function YoutubeLiveView(props) {
           setGuest(snapshot.val());
         });
       if (guest === loggedUser) {
+          setTurn(true)
         firebase
           .database()
           .ref(`/${anotherCreatorId}/data/being`)
@@ -409,7 +387,7 @@ export default function YoutubeLiveView(props) {
         className="swiping"
         style={{ height: "100%", overflow: "hidden" }}
       >
-        {!host && youtubeScreen ? (
+        {!host && !turn ? (
           <>
             <View
               style={{
@@ -420,10 +398,6 @@ export default function YoutubeLiveView(props) {
               }}
             >
               <YoutubeComp videoId={primaryPresence} opacity={1} />
-              {/* <YoutubeComp
-            videoId={host ? selfPresence : primaryPresence}
-            opacity={guestScreen ? 0 : 1}
-          /> */}
             </View>
             <View
               style={{
@@ -437,7 +411,7 @@ export default function YoutubeLiveView(props) {
               }}
             ></View>
           </>
-        ) : (host && videoCallScreen) || (!host && guest === loggedUser) ? (
+      ) : (host && videoCallScreen) || (turn) ? (
           <View
             style={{
               position: "absolute",
@@ -452,8 +426,8 @@ export default function YoutubeLiveView(props) {
           >
             <VideoRoom
               username={creatorId}
-              spaceOwner={false}
-              creator={false}
+              spaceOwner={host}
+              creator={host}
             />
           </View>
         ) : (
@@ -476,22 +450,7 @@ export default function YoutubeLiveView(props) {
             <Button>ENJOYING EVENT? DONATE TO CREATOR</Button>
           </View>
         )}
-        {textScreen && (
-          <View
-            style={{
-              position: "absolute",
-              top: 0,
-              left: 0,
-              backgroundColor: "#fff",
-              height: height,
-              width: width,
-              justifyContent: "center",
-              alignItems: "center",
-            }}
-          >
-            <h2>Text SCREEN WILL BE HERE</h2>
-          </View>
-        )}
+
       </Swipeable>
 
       <Dialog
